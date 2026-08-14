@@ -1,5 +1,6 @@
 import { showToast, Toast, showHUD } from "@raycast/api";
 import { existsSync } from "fs";
+import { homedir } from "os";
 import { getMostRecentProject } from "./lib/project-discovery";
 import { getMostRecentSession } from "./lib/session-parser";
 import { launchClaudeCode } from "./lib/terminal";
@@ -34,11 +35,11 @@ export default async function QuickContinue() {
       return;
     }
 
-    // No projects found
-    await showToast({
-      style: Toast.Style.Failure,
-      title: "No Recent Sessions",
-      message: "Run Claude Code in a project first to enable quick continue",
+    // No sessions or projects anywhere — start a fresh session in the home
+    // directory instead of dead-ending with an error.
+    await showHUD("No previous session — starting a new one...");
+    await launchClaudeCode({
+      projectPath: homedir(),
     });
   } catch (error) {
     await showToast({

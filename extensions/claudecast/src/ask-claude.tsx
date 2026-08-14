@@ -129,6 +129,7 @@ function AskClaudeForm() {
   const [context, setContext] = useState<CapturedContext | null>(null);
   const defaultProjectPath = `${homedir()}/claudecast`;
   const [projectPath, setProjectPath] = useState(defaultProjectPath);
+  const [promptText, setPromptText] = useState("");
 
   // Load saved project path from LocalStorage on mount
   useEffect(() => {
@@ -300,7 +301,20 @@ function AskClaudeForm() {
                 if (!existsSync(targetPath)) {
                   mkdirSync(targetPath, { recursive: true });
                 }
-                await launchClaudeCode({ projectPath: targetPath });
+                // Carry the typed prompt (and captured context, if any) into
+                // the terminal session instead of opening a blank one.
+                const trimmedPrompt = promptText.trim();
+                const contextStr = context
+                  ? formatContextForPrompt(context)
+                  : undefined;
+                const fullPrompt =
+                  trimmedPrompt && contextStr
+                    ? `Context:\n${contextStr}\n\nQuestion/Task:\n${trimmedPrompt}`
+                    : trimmedPrompt || undefined;
+                await launchClaudeCode({
+                  projectPath: targetPath,
+                  ...(fullPrompt ? { prompt: fullPrompt } : {}),
+                });
                 await popToRoot();
               } catch (error) {
                 await showToast({
@@ -320,6 +334,8 @@ function AskClaudeForm() {
         title="Prompt"
         placeholder="Ask Claude Code anything..."
         autoFocus
+        value={promptText}
+        onChange={setPromptText}
       />
 
       <Form.Dropdown

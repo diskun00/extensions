@@ -1,5 +1,14 @@
 # ClaudeCast Changelog
 
+## [Resume Fallback] - 2026-08-14
+
+### Fixed
+
+- **Resume Fallback to New Session**: When "Continue in Terminal" or Quick Continue resumes a session that no longer exists (or was never persisted), the terminal command now falls back to starting a fresh Claude session (`claude -r <id> || claude`) instead of leaving the user at a bare shell prompt.
+- **Quick Continue Without History**: When no sessions or recent projects exist at all, Quick Continue now starts a new session in the home directory instead of failing with a "No Recent Sessions" toast.
+- **Open Full Session Carries Context**: The ⌘O "Open Full Session" action in Ask Claude Code now launches the terminal session with the prompt typed in the form and the captured context (⌘G), if any — instead of always opening a blank session.
+- **Ghostty Tab Mode**: Ghostty's `new tab` AppleScript verb requires an explicit target window (the `in` parameter is marked optional in the sdef but the handler rejects the event without it, at least on Ghostty 1.3.x). Tab mode now targets the front window and falls back to a new window when none is open, so the "Open In: New Tab" preference is respected.
+
 ## [1.8.0] - 2026-05-08
 
 ### Added

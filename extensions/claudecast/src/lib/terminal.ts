@@ -270,16 +270,25 @@ async function openInGhostty(
   const escapedCwd = escapeAppleScriptDoubleQuoted(cwd);
 
   // Use Ghostty's native AppleScript API with surface configuration.
-  // `new tab` opens the surface as a tab in the front window when one
-  // exists; `new window` always spawns a fresh window.
-  const target = openIn === "tab" ? "new tab" : "new window";
+  // `new tab` requires an explicit target window (the `in` parameter is
+  // marked optional in the sdef, but Ghostty's handler rejects the event
+  // without it), so tab mode targets the front window and falls back to
+  // `new window` when no window is open.
+  const target =
+    openIn === "tab"
+      ? `if (count of windows) > 0 then
+        new tab in front window with configuration cfg
+      else
+        new window with configuration cfg
+      end if`
+      : "new window with configuration cfg";
   const script = `
     tell application "Ghostty"
       activate
       set cfg to new surface configuration
       set initial working directory of cfg to "${escapedCwd}"
       set initial input of cfg to "${escapedCommand}" & (ASCII character 10)
-      ${target} with configuration cfg
+      ${target}
     end tell
   `;
 
@@ -416,7 +425,13 @@ export async function launchClaudeCode(options: {
     }
   }
 
-  const command = args.join(" ");
+  let command = args.join(" ");
+  // If resuming fails (e.g. the session no longer exists or was never
+  // persisted), fall back to starting a fresh session instead of leaving
+  // the user at a bare shell prompt.
+  if (isResumingSession) {
+    command += " || claude";
+  }
   await openTerminalWithCommand(command, { cwd: options.projectPath });
 }
 
